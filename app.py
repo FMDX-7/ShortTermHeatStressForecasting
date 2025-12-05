@@ -15,7 +15,11 @@ from datetime import datetime, timedelta
 import plotly.graph_objects as go
 from sklearn.linear_model import LinearRegression
 import warnings
+import os
 #warnings.filterwarnings('ignore')
+
+# Define the base directory of your script file
+DIR_NAME = os.path.dirname(os.path.abspath(__file__))
 
 # ============================================================================
 # PAGE CONFIG
@@ -34,8 +38,11 @@ st.markdown("**Heat Stress Risk Index** • Real-time conditions & clothing reco
 # LOAD DATA
 # ============================================================================
 @st.cache_data
-def load_weather_data(filepath='data/weather.csv'):
+def load_weather_data():
     """Load and preprocess weather CSV, filtering for core meteorological data."""
+    # Use os.path.join for cross-platform path creation
+    filepath = os.path.join(DIR_NAME, 'data', 'weather.csv')
+    
     df = pd.read_csv(filepath)
     df['datetime'] = pd.to_datetime(df['datetime'])
     
@@ -49,9 +56,11 @@ def load_weather_data(filepath='data/weather.csv'):
     return df
 
 @st.cache_data
-def load_metro_data(filepath='data/metro.csv'):
+def load_metro_data():
     """Load metro area county data."""
     try:
+        # Use os.path.join for cross-platform path creation
+        filepath = os.path.join(DIR_NAME, 'data', 'metro.csv')
         metro_df = pd.read_csv(filepath)
         return metro_df
     except FileNotFoundError:
