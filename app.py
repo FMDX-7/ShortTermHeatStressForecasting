@@ -851,9 +851,11 @@ with tab_about:
     - **Rationale**: Prioritizes interpretability and operational feasibility over black-box approaches
     
     ### Data Quality
-    - ✓ Complete records only (no missing meteorological parameters)
+    - ✓ Core meteorological parameters required (temp, humidity, windspeed)
     - ✓ Hourly temporal resolution for real-time monitoring
     - ✓ Multi-station coverage for geographic accuracy
+    - ✓ Solar, UV, cloud data optional (shows "N/A" when unavailable)
+    - ✓ Historical data spanning 2018-2025
     
     ---
     
@@ -944,12 +946,12 @@ with tab_about:
     - Linear regression on 6-dimensional weather feature space
     - Trained on historical HSRI data
     - Future predictions based on trend extrapolation
-    - Reasonable bounds (30-130°F) to prevent unrealistic values
+    - Bounds: [-100, 100]°F to allow natural winter and summer values
     
     ---
     
     ## Project Team
-    - **Institution**: Cornell University, College ofEngineering (Systems Engineering)
+    - **Institution**: Cornell University, College of Engineering (Systems Engineering)
     - **Course**: SYSEN 5300 - Systems Engineering and Six Sigma for the Design and Operation of Reliable Systems
     - **Academic Year**: Fall 2025
     
