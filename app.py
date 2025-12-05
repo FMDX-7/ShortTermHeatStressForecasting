@@ -676,7 +676,7 @@ with tab_dashboard:
             
             folium.CircleMarker(
                 location=[row['latitude'], row['longitude']],
-                radius=12,
+                radius=16,
                 popup=folium.Popup(popup_text, max_width="300px"),
                 tooltip=f"{site_name}: HSRI {hsri_val:.1f}",
                 color=get_marker_color(hsri_val),
