@@ -35,13 +35,16 @@ st.markdown("**Heat Stress Risk Index** • Real-time conditions & clothing reco
 # ============================================================================
 @st.cache_data
 def load_weather_data(filepath='weather.csv'):
-    """Load and preprocess weather CSV, filtering for complete records."""
+    """Load and preprocess weather CSV, filtering for core meteorological data."""
     df = pd.read_csv(filepath)
     df['datetime'] = pd.to_datetime(df['datetime'])
     
-    # Filter for rows with all required parameters
-    required_cols = ['temp', 'humidity', 'windspeed', 'uvindex', 'solarradiation', 'cloudcover']
+    # Filter for rows with core meteorological parameters only
+    required_cols = ['temp', 'humidity', 'windspeed']
     df = df.dropna(subset=required_cols)
+    
+    # Keep solar radiation, UV index, and cloud cover as-is (with NaN for missing values)
+    # These will be handled as "N/A" in display
     
     return df
 
@@ -162,18 +165,21 @@ def compute_hsri(temp_f, humidity, wind_speed, solar_radiation, uv_index, cloud_
     - CC: Cloud cover (%), shading effect
     
     Calibrated weights: α=0.3, β=8, γ=4, δ=0.05
+    Missing values for solar, UV, and cloud cover are treated as 0
     """
     # NWS Heat Index (Rothfusz regression)
     hi_base = compute_hi_nws(temp_f, humidity)
     
-    # Effective solar radiation (normalized by 1000)
-    sr_eff = max(0, solar_radiation / 1000.0)  # scale to ~0-1
+    # Handle missing values for solar radiation, UV, and cloud cover
+    sr_eff = 0 if pd.isna(solar_radiation) else max(0, solar_radiation / 1000.0)
+    uv_val = 0 if pd.isna(uv_index) else uv_index
+    cc_val = 0 if pd.isna(cloud_cover) else cloud_cover
     
     # HSRI components with empirically calibrated weights
     alpha, beta, gamma, delta = 0.3, 8.0, 4.0, 0.05
-    hsri = hi_base + alpha * uv_index + beta * sr_eff - gamma * wind_speed - delta * cloud_cover
+    hsri = hi_base + alpha * uv_val + beta * sr_eff - gamma * wind_speed - delta * cc_val
     
-    return np.clip(hsri, 30, 130)  # Reasonable bounds for human comfort index
+    return np.clip(hsri, -100, 100)  # Reasonable bounds for human comfort index
 
 def compute_hi_nws(temp_f, humidity):
     """NWS Heat Index (Rothfusz regression)."""
@@ -204,7 +210,15 @@ def forecast_hsri(historical_data, days_ahead=3):
     
     try:
         # Prepare features for modeling
-        X = historical_data[['temp', 'humidity', 'windspeed', 'solarradiation', 'uvindex', 'cloudcover']].values
+        feature_cols = ['temp', 'humidity', 'windspeed', 'solarradiation', 'uvindex', 'cloudcover']
+        X = historical_data[feature_cols].copy()
+        
+        # Fill NaN values in solar, UV, and cloud cover with column mean
+        X['solarradiation'] = X['solarradiation'].fillna(X['solarradiation'].mean())
+        X['uvindex'] = X['uvindex'].fillna(X['uvindex'].mean())
+        X['cloudcover'] = X['cloudcover'].fillna(X['cloudcover'].mean())
+        
+        X = X.values
         y = historical_data['hsri'].values
         
         # Train linear regression
@@ -219,7 +233,7 @@ def forecast_hsri(historical_data, days_ahead=3):
             # Simple trend: assume weather gradually changes
             forecast_features = avg_features * (1 + 0.02 * day)
             forecast_hsri = model.predict([forecast_features])[0]
-            forecast_values.append(np.clip(forecast_hsri, 30, 130))
+            forecast_values.append(np.clip(forecast_hsri, -100, 100))
         
         return forecast_values
     except:
@@ -235,7 +249,7 @@ def get_risk_category(hsri):
         return "🟡 MODERATE", "Moderate Heat"
     elif hsri >= 50:
         return "🟢 LOW", "Mild"
-    elif hsri >= 35:
+    elif hsri >= 30:
         return "🔵 COOL", "Cool"
     else:
         return "⚪ FREEZING", "Freezing"
@@ -303,8 +317,8 @@ selected_datetime = datetime.combine(selected_date, datetime.min.time()).replace
 # HSRI Risk Threshold - use number input instead of slider
 hsri_threshold = st.sidebar.number_input(
     "🌡️ HSRI Risk Threshold",
-    min_value=30,
-    max_value=130,
+    min_value=-100,
+    max_value=100,
     value=65,
     step=5,
     help="Show locations with HSRI >= threshold"
@@ -359,8 +373,6 @@ selected_area = st.sidebar.selectbox(
     list(nyc_areas.keys()),
     help="Only shows areas with available data"
 )
-
-show_forecast = st.sidebar.checkbox("📈 Show 3-Day Forecast", value=True)
 
 st.sidebar.divider()
 st.sidebar.markdown("### 📊 Project Info")
@@ -512,44 +524,41 @@ with tab_dashboard:
         with col_forecast:
             st.subheader("🔮 3-Day HSRI Forecast")
             
-            if show_forecast:
-                forecast = forecast_hsri(df_current, days_ahead=3)
+            forecast = forecast_hsri(df_current, days_ahead=3)
+            
+            if forecast:
+                forecast_dates = [closest_time + timedelta(days=i) for i in range(1, 4)]
+                forecast_data = pd.DataFrame({
+                    'Date': forecast_dates,
+                    'Forecast HSRI': forecast
+                })
                 
-                if forecast:
-                    forecast_dates = [closest_time + timedelta(days=i) for i in range(1, 4)]
-                    forecast_data = pd.DataFrame({
-                        'Date': forecast_dates,
-                        'Forecast HSRI': forecast
-                    })
-                    
-                    fig = go.Figure()
-                    fig.add_trace(go.Scatter(
-                        x=forecast_data['Date'],
-                        y=forecast_data['Forecast HSRI'],
-                        mode='lines+markers',
-                        name='Forecast',
-                        line=dict(color='#FF6B6B', width=3),
-                        marker=dict(size=10)
-                    ))
-                    fig.add_hline(
-                        y=hsri_threshold,
-                        line_dash="dash",
-                        line_color="darkred",
-                        annotation_text=f"Threshold: {hsri_threshold}"
-                    )
-                    fig.update_layout(
-                        title="Next 3 Days",
-                        xaxis_title="Date",
-                        yaxis_title="Predicted HSRI",
-                        height=400,
-                        template="plotly_white",
-                        hovermode='x unified'
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.warning("⚠️ Insufficient data for forecasting")
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
+                    x=forecast_data['Date'],
+                    y=forecast_data['Forecast HSRI'],
+                    mode='lines+markers',
+                    name='Forecast',
+                    line=dict(color='#FF6B6B', width=3),
+                    marker=dict(size=10)
+                ))
+                fig.add_hline(
+                    y=hsri_threshold,
+                    line_dash="dash",
+                    line_color="darkred",
+                    annotation_text=f"Threshold: {hsri_threshold}"
+                )
+                fig.update_layout(
+                    title="Next 3 Days",
+                    xaxis_title="Date",
+                    yaxis_title="Predicted HSRI",
+                    height=400,
+                    template="plotly_white",
+                    hovermode='x unified'
+                )
+                st.plotly_chart(fig, use_container_width=True)
             else:
-                st.info("📊 Enable forecast in sidebar to view predictions")
+                st.warning("⚠️ Insufficient data for forecasting")
         
         st.divider()
         
@@ -585,37 +594,6 @@ with tab_dashboard:
         st.divider()
         
         # ====================================================================
-        # CLOTHING RECOMMENDATIONS
-        # ====================================================================
-        st.subheader("👕 Protective Clothing Guide by Risk Level")
-        
-        recommendations = [
-            ("85+", "🩳 Shorts + Tank Top", "🔴 Critical Heat", "#ffe6e6"),
-            ("75-84", "👕 Shorts + T-Shirt", "🟠 High Heat", "#fff0e6"),
-            ("65-74", "👔 Short Sleeves", "🟡 Moderate Heat", "#fffef0"),
-            ("50-64", "👗 Light Layers", "🟢 Mild", "#f0fff0"),
-            ("<50", "🧥 Jacket", "🔵 Cool", "#f0f8ff"),
-        ]
-        
-        cols = st.columns(len(recommendations))
-        for i, (hsri_range, clothing, risk, bg_color) in enumerate(recommendations):
-            with cols[i]:
-                parts = clothing.split(None, 1)
-                emoji = parts[0] if parts else "👕"
-                description = parts[1] if len(parts) > 1 else clothing
-                
-                st.markdown(f"""
-                <div style="background-color: {bg_color}; padding: 15px; border-radius: 8px; text-align: center;">
-                    <b>HSRI {hsri_range}</b><br/>
-                    <span style="font-size: 24px;">{emoji}</span><br/>
-                    <small>{description}</small><br/>
-                    <b>{risk}</b>
-                </div>
-                """, unsafe_allow_html=True)
-        
-        st.divider()
-        
-        # ====================================================================
         # MAP ON DASHBOARD
         # ====================================================================
         st.subheader("🗺️ Geographic Heat Risk Map")
@@ -640,15 +618,17 @@ with tab_dashboard:
         
         def get_marker_color(hsri_val):
             if hsri_val >= 85:
-                return '#d62728'
+                return '#d62728'  # Critical - dark red
             elif hsri_val >= 75:
-                return '#ff7f0e'
+                return '#ff7f0e'  # High - orange
             elif hsri_val >= 65:
-                return '#ffbb78'
+                return '#ffbb78'  # Moderate - light orange
             elif hsri_val >= 50:
-                return '#2ca02c'
+                return '#2ca02c'  # Low - green
+            elif hsri_val >= 30:
+                return '#1f77b4'  # Cool - blue
             else:
-                return '#1f77b4'
+                return '#6a0dad'  # Freezing - dark purple
         
         for _, row in df_area.iterrows():
             hsri_val = row.get('hsri', 0)
@@ -676,7 +656,7 @@ with tab_dashboard:
             
             folium.CircleMarker(
                 location=[row['latitude'], row['longitude']],
-                radius=12,
+                radius=16,
                 popup=folium.Popup(popup_text, max_width="300px"),
                 tooltip=f"{site_name}: HSRI {hsri_val:.1f}",
                 color=get_marker_color(hsri_val),
@@ -687,41 +667,55 @@ with tab_dashboard:
             ).add_to(m)
             
             # Add text label with HSRI value inside circle
+            # Use darker text for light backgrounds (Moderate/Low levels)
+            text_color = '#333333' if 50 <= hsri_val < 75 else 'white'
+            text_shadow = '1px 1px 2px rgba(255,255,255,0.8)' if 50 <= hsri_val < 75 else '1px 1px 2px rgba(0,0,0,0.8)'
+            
             folium.Marker(
                 location=[row['latitude'], row['longitude']],
                 icon=folium.DivIcon(html=f"""
                     <div style="
-                        font-size: 12px;
+                        font-size: 13px;
                         font-weight: bold;
-                        color: white;
+                        color: {text_color};
                         text-align: center;
-                        text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-                        width: 30px;
-                        height: 30px;
+                        text-shadow: {text_shadow};
+                        width: 32px;
+                        height: 32px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        margin-left: -15px;
-                        margin-top: -15px;
+                        margin-left: -16px;
+                        margin-top: -16px;
                     ">{hsri_val:.0f}</div>
                 """)
             ).add_to(m)
         
         st_folium(m, width=1400, height=700)
         
-        # Legend
-        st.markdown("**Risk Level Legend**")
-        map_col1, map_col2, map_col3, map_col4, map_col5 = st.columns(5)
-        with map_col1:
-            st.markdown('<div style="padding: 10px; background-color: #ffe6e6; border-left: 4px solid #d62728;"><b>🔴 Critical</b><br/>HSRI ≥ 85</div>', unsafe_allow_html=True)
-        with map_col2:
-            st.markdown('<div style="padding: 10px; background-color: #fff0e6; border-left: 4px solid #ff7f0e;"><b>🟠 High</b><br/>HSRI ≥ 75</div>', unsafe_allow_html=True)
-        with map_col3:
-            st.markdown('<div style="padding: 10px; background-color: #fffef0; border-left: 4px solid #ffbb78;"><b>🟡 Moderate</b><br/>HSRI ≥ 65</div>', unsafe_allow_html=True)
-        with map_col4:
-            st.markdown('<div style="padding: 10px; background-color: #f0fff0; border-left: 4px solid #2ca02c;"><b>🟢 Low</b><br/>HSRI ≥ 50</div>', unsafe_allow_html=True)
-        with map_col5:
-            st.markdown('<div style="padding: 10px; background-color: #f0f8ff; border-left: 4px solid #1f77b4;"><b>🔵 Cool</b><br/>HSRI < 50</div>', unsafe_allow_html=True)
+        # Legend with Clothing Recommendations
+        st.markdown("**👕 Risk Level Legend with Protective Clothing Guide**")
+        
+        recommendations = [
+            ("85+", "🩳", "Shorts + Tank", "🔴 Critical", "#ffe6e6", "#d62728"),
+            ("75-84", "👕", "Shorts + T-Shirt", "🟠 High", "#fff0e6", "#ff7f0e"),
+            ("65-74", "👔", "Short Sleeves", "🟡 Moderate", "#fffef0", "#ffbb78"),
+            ("50-64", "👗", "Light Layers", "🟢 Low", "#f0fff0", "#2ca02c"),
+            ("30-49", "🧥", "Light Jacket", "🔵 Cool", "#f0f8ff", "#1f77b4"),
+            ("<30", "🧤", "Winter Coat", "🟣 Freezing", "#f3e6ff", "#6a0dad"),
+        ]
+        
+        cols = st.columns(len(recommendations))
+        for i, (hsri_range, clothing_emoji, clothing_desc, risk_label, bg_color, border_color) in enumerate(recommendations):
+            with cols[i]:
+                st.markdown(f"""
+                <div style="padding: 12px; background-color: {bg_color}; border-left: 5px solid {border_color}; border-radius: 5px;">
+                    <b>{risk_label}</b><br/>
+                    <b>HSRI {hsri_range}</b><br/>
+                    <div style="font-size: 28px; margin: 8px 0;">{clothing_emoji}</div>
+                    <small>{clothing_desc}</small>
+                </div>
+                """, unsafe_allow_html=True)
     
     else:
         st.warning(f"⚠️ No data available for {selected_datetime.strftime('%Y-%m-%d %H:%M UTC')}. Please select a different time.")
@@ -751,12 +745,19 @@ with tab_weather:
                 with col2:
                     st.markdown("**Wind & Clouds**")
                     st.metric("💨 Wind Speed", f"{row.get('windspeed', 'N/A'):.1f} mph")
-                    st.metric("☁️ Cloud Cover", f"{row.get('cloudcover', 'N/A'):.0f}%")
+                    cc_val = row.get('cloudcover', 'N/A')
+                    cc_display = "N/A" if pd.isna(cc_val) else f"{cc_val:.0f}%"
+                    st.metric("☁️ Cloud Cover", cc_display)
                 
                 with col3:
                     st.markdown("**Solar & UV**")
-                    st.metric("☀️ Solar Radiation", f"{row.get('solarradiation', 'N/A'):.0f} W/m²")
-                    st.metric("🌫️ UV Index", f"{row.get('uvindex', 'N/A'):.1f}")
+                    sr_val = row.get('solarradiation', 'N/A')
+                    sr_display = "N/A" if pd.isna(sr_val) else f"{sr_val:.0f} W/m²"
+                    st.metric("☀️ Solar Radiation", sr_display)
+                    
+                    uv_val = row.get('uvindex', 'N/A')
+                    uv_display = "N/A" if pd.isna(uv_val) else f"{uv_val:.1f}"
+                    st.metric("🌫️ UV Index", uv_display)
                 
                 with col4:
                     st.markdown("**Heat Stress Index**")
@@ -850,9 +851,11 @@ with tab_about:
     - **Rationale**: Prioritizes interpretability and operational feasibility over black-box approaches
     
     ### Data Quality
-    - ✓ Complete records only (no missing meteorological parameters)
+    - ✓ Core meteorological parameters required (temp, humidity, windspeed)
     - ✓ Hourly temporal resolution for real-time monitoring
     - ✓ Multi-station coverage for geographic accuracy
+    - ✓ Solar, UV, cloud data optional (shows "N/A" when unavailable)
+    - ✓ Historical data spanning 2018-2025
     
     ---
     
@@ -943,14 +946,14 @@ with tab_about:
     - Linear regression on 6-dimensional weather feature space
     - Trained on historical HSRI data
     - Future predictions based on trend extrapolation
-    - Reasonable bounds (30-130°F) to prevent unrealistic values
+    - Bounds: [-100, 100]°F to allow natural winter and summer values
     
     ---
     
     ## Project Team
-    - **Institution**: Cornell University, School of Operations Research and Information Engineering (SYSEN)
-    - **Course**: SYSEN 5300 - Short-Term Heat Stress Forecasting
-    - **Academic Year**: 2024-2025
+    - **Institution**: Cornell University, College of Engineering (Systems Engineering)
+    - **Course**: SYSEN 5300 - Systems Engineering and Six Sigma for the Design and Operation of Reliable Systems
+    - **Academic Year**: Fall 2025
     
     ### Application Stack
     - **Frontend**: Streamlit (Python web app framework)
@@ -964,6 +967,7 @@ with tab_about:
     ## Further Information
     
     ### Related Resources
+    - [Weather - Tim fraser - GitHub](https://github.com/timothyfraser/sts/tree/3week/data/weather)       
     - [NWS Heat Index](https://www.weather.gov/media/epz/wxcalc/heatIndex.pdf)
     - [EPA UV Index Guide](https://www.epa.gov/sites/production/files/2015-09/documents/UV_Index_10.pdf)
     - [CDC Heat Stress Prevention](https://www.cdc.gov/niosh/topics/emres/cheathstress.html)
