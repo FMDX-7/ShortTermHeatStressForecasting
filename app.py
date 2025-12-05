@@ -400,7 +400,7 @@ st.sidebar.info(f"📍 Data for: **{pd.Timestamp(closest_time).strftime('%Y-%m-%
 # ====================================================================
 # CREATE TABS
 # ====================================================================
-tab_dashboard, tab_weather, tab_about = st.tabs(["📊 Dashboard", "🌦️ Weather Details", "ℹ️ About"])
+tab_dashboard, tab_forecast_map, tab_weather, tab_about = st.tabs(["📊 Dashboard", "🔮 Forecast Map", "🌦️ Weather Details", "ℹ️ About"])
 
 # ====================================================================
 # TAB 1: DASHBOARD
@@ -800,6 +800,167 @@ with tab_weather:
             st.info(f"✅ No sites exceed HSRI threshold of {hsri_threshold}")
 
 # ====================================================================
+# TAB 3: FORECAST MAP
+# ====================================================================
+with tab_forecast_map:
+    st.subheader("🔮 3-Day HSRI Forecast Map")
+    st.markdown("Predicted heat stress risk index across all monitoring locations for the next 3 days")
+    
+    # Day selector for forecast
+    forecast_day = st.selectbox(
+        "Select forecast day:",
+        options=[1, 2, 3],
+        format_func=lambda x: f"Day {x} ({(pd.Timestamp(closest_time) + timedelta(days=x)).strftime('%Y-%m-%d')})"
+    )
+    
+    # Generate forecast for all sites using full weather data
+    forecast_data_all = {}
+    for aqs_id in weather_df['aqs_id_full'].unique():
+        site_data = weather_df[weather_df['aqs_id_full'] == aqs_id].sort_values('datetime').tail(50).copy()
+        if len(site_data) > 10:  # Need at least 10 records to forecast
+            # Compute HSRI for historical data
+            site_data['hsri'] = site_data.apply(
+                lambda row: compute_hsri(
+                    row.get('temp', 70),
+                    row.get('humidity', 50),
+                    row.get('windspeed', 5),
+                    row.get('solarradiation', 500),
+                    row.get('uvindex', 5),
+                    row.get('cloudcover', 50)
+                ), axis=1
+            )
+            forecast = forecast_hsri(site_data, days_ahead=3)
+            if forecast:
+                forecast_data_all[aqs_id] = forecast
+    
+    if not forecast_data_all:
+        st.warning("⚠️ Insufficient data for generating forecasts. Make sure weather.csv has data with required columns.")
+    else:
+        # Create forecast map with all sites that have forecasts
+        sites_with_forecast = sites_df[sites_df['aqs_id_full'].isin(forecast_data_all.keys())]
+        
+        if not sites_with_forecast.empty:
+            center_lat = sites_with_forecast['latitude'].mean()
+            center_lon = sites_with_forecast['longitude'].mean()
+        else:
+            center_lat = 40.7128
+            center_lon = -74.0060
+        
+        if pd.isna(center_lat) or pd.isna(center_lon):
+            center_lat = 40.7128
+            center_lon = -74.0060
+        
+        m_forecast = folium.Map(
+            location=[center_lat, center_lon],
+            zoom_start=11,
+            tiles='OpenStreetMap'
+        )
+        
+        def get_marker_color(hsri_val):
+            if hsri_val >= 85:
+                return '#d62728'  # Critical - dark red
+            elif hsri_val >= 75:
+                return '#ff7f0e'  # High - orange
+            elif hsri_val >= 65:
+                return '#ffbb78'  # Moderate - light orange
+            elif hsri_val >= 50:
+                return '#2ca02c'  # Low - green
+            elif hsri_val >= 30:
+                return '#1f77b4'  # Cool - blue
+            else:
+                return '#6a0dad'  # Freezing - dark purple
+        
+        # Add markers for each site with forecasted HSRI
+        for _, row in sites_with_forecast.iterrows():
+            aqs_id = row.get('aqs_id_full')
+            site_name = row.get('site_name', 'Unknown')
+            county = row.get('county', 'Unknown')
+            
+            if aqs_id in forecast_data_all:
+                forecast_values = forecast_data_all[aqs_id]
+                forecasted_hsri = forecast_values[forecast_day - 1]
+                risk_emoji, risk_text = get_risk_category(forecasted_hsri)
+                
+                popup_text = f"""
+                <div style="font-family: Arial; width: 300px;">
+                    <b style="font-size: 14px;">{site_name}</b><br/>
+                    <hr style="margin: 5px 0;">
+                    <b>County:</b> {county}<br/>
+                    <b>📅 Date:</b> {(pd.Timestamp(closest_time) + timedelta(days=forecast_day)).strftime('%Y-%m-%d')}<br/>
+                    <hr style="margin: 5px 0;">
+                    <b style="font-size: 13px;">Forecast HSRI: {forecasted_hsri:.1f}</b><br/>
+                    <b>{risk_emoji} {risk_text}</b>
+                </div>
+                """
+                
+                folium.CircleMarker(
+                    location=[row['latitude'], row['longitude']],
+                    radius=16,
+                    popup=folium.Popup(popup_text, max_width="300px"),
+                    tooltip=f"{site_name}: Forecast HSRI {forecasted_hsri:.1f}",
+                    color=get_marker_color(forecasted_hsri),
+                    fill=True,
+                    fillColor=get_marker_color(forecasted_hsri),
+                    fillOpacity=0.7,
+                    weight=2
+                ).add_to(m_forecast)
+                
+                # Add text label with forecasted HSRI value
+                text_color = '#333333' if 50 <= forecasted_hsri < 75 else 'white'
+                text_shadow = '1px 1px 2px rgba(255,255,255,0.8)' if 50 <= forecasted_hsri < 75 else '1px 1px 2px rgba(0,0,0,0.8)'
+                
+                folium.Marker(
+                    location=[row['latitude'], row['longitude']],
+                    icon=folium.DivIcon(html=f"""
+                    <div style="
+                        font-size: 13px;
+                        font-weight: bold;
+                        color: {text_color};
+                        text-align: center;
+                        text-shadow: {text_shadow};
+                        width: 32px;
+                        height: 32px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-left: -16px;
+                        margin-top: -16px;
+                    ">{forecasted_hsri:.0f}</div>
+                """)
+                ).add_to(m_forecast)
+        
+        st_folium(m_forecast, width=1400, height=700)
+        
+        # Summary statistics for forecast
+        st.divider()
+        st.subheader("📊 Forecast Summary Statistics")
+        
+        all_forecast_values = [forecast_data_all[aqs_id][forecast_day - 1] for aqs_id in forecast_data_all]
+        
+        col1, col2, col3, col4, col5 = st.columns(5)
+        
+        with col1:
+            avg_hsri = np.mean(all_forecast_values)
+            st.metric("📊 Avg Forecast HSRI", f"{avg_hsri:.1f}°F")
+        
+        with col2:
+            max_hsri = np.max(all_forecast_values)
+            risk_emoji, risk_text = get_risk_category(max_hsri)
+            st.metric("🔥 Peak Forecast HSRI", f"{max_hsri:.1f}°F", delta=risk_text)
+        
+        with col3:
+            min_hsri = np.min(all_forecast_values)
+            st.metric("❄️ Min Forecast HSRI", f"{min_hsri:.1f}°F")
+        
+        with col4:
+            high_risk_count = sum(1 for val in all_forecast_values if val >= hsri_threshold)
+            st.metric("⚠️ High-Risk Sites", high_risk_count)
+        
+        with col5:
+            forecast_date = (pd.Timestamp(closest_time) + timedelta(days=forecast_day)).strftime('%b %d, %Y')
+            st.metric("📅 Forecast Date", forecast_date)
+
+# ====================================================================
 # TAB 4: ABOUT
 # ====================================================================
 with tab_about:
@@ -876,13 +1037,7 @@ with tab_about:
     - 3-day HSRI forecast with uncertainty
     - Operational insights (cooling center readiness, healthcare alert levels)
     - Protective clothing recommendations by risk level
-    
-    ### 🗺️ Large Map Tab
-    - Interactive geographic map with color-coded risk markers
-    - Click markers to view detailed conditions at each station
-    - Zoom and pan to explore specific regions
-    - Full-screen display for decision-making dashboards
-    
+
     ### 🌦️ Weather Details Tab
     - Expandable detailed weather for each location
     - All 6 meteorological variables with units
