@@ -1118,6 +1118,12 @@ with tab_about:
     st.markdown("""
     # About This Dashboard
     
+    #Team
+    Members: Fabien M. De Silva Jr. fmd48@cornell.edu | Jose Ruben Salinas Aguilar js3873@cornell.edu | Anggasta Anindityo aa2938@cornell.edu
+    Institution: Cornell University, SYSEN
+    Course: SYSEN 5300 - Systems Engineering and Six Sigma
+    Year: Fall 2025
+    
     ## Project Overview
     This Heat Stress Risk Index (HSRI) Weather Dashboard is a real-time monitoring and forecasting system 
     designed to reduce heat-related health impacts across the NYC metropolitan region. Developed as part of 
