@@ -64,14 +64,61 @@ def load_site_data(weather_df=None):
     
     # Create mapping for known/major NYC metro AQS IDs
     aqs_mapping = {
-        840421010055: ('New York-Brooklyn', 'Kings County', 40.6501, -73.9496),
-        840360330029: ('Queens-Nassau', 'Queens County', 40.7282, -73.7949),
-        840360470006: ('Westchester', 'Westchester County', 40.9176, -73.8312),
-        840360610028: ('Bronx-Yonkers', 'Bronx County', 40.8448, -73.8648),
-        840360850002: ('Staten Island', 'Richmond County', 40.5640, -74.0734),
-        840360050001: ('New Jersey-Bergen', 'Bergen County', 40.8176, -74.0569),
-        840361190001: ('New Jersey-Hudson', 'Hudson County', 40.7178, -74.0569),
-        840360790003: ('Connecticut', 'New Haven County', 41.3083, -72.9279),
+        # NYC (5 Boroughs)
+        840421010055: ('Manhattan-Midtown', 'New York County', 40.7614, -73.9776),
+        840421010075: ('Manhattan-Upper West', 'New York County', 40.7831, -73.9712),
+        840421010048: ('Manhattan-Upper East', 'New York County', 40.7688, -73.9519),
+        840090010010: ('Brooklyn-Downtown', 'Kings County', 40.6501, -73.9496),
+        
+        # Queens
+        840360470052: ('Queens-Astoria', 'Queens County', 40.7673, -73.9302),
+        840360470118: ('Queens-Jamaica', 'Queens County', 40.7014, -73.8156),
+        
+        # Bronx
+        840360610135: ('Bronx-SW', 'Bronx County', 40.8298, -73.8850),
+        840360610115: ('Bronx-Pelham', 'Bronx County', 40.8648, -73.8276),
+        
+        # Staten Island
+        840360850055: ('Staten Island-Fresh Kills', 'Richmond County', 40.5834, -74.1677),
+        840360850111: ('Staten Island-Coney Island', 'Richmond County', 40.5755, -74.1333),
+        
+        # Westchester County
+        840360050080: ('Westchester-Yonkers', 'Westchester County', 40.9230, -73.8987),
+        840360050110: ('Westchester-Mamaroneck', 'Westchester County', 40.9450, -73.7350),
+        840360050112: ('Westchester-Croton', 'Westchester County', 41.1833, -73.8667),
+        
+        # New Jersey - Bergen & Hudson
+        840360710002: ('NJ-Hudson', 'Hudson County', 40.7178, -74.0569),
+        
+        # Connecticut
+        840090090027: ('CT-New Haven', 'New Haven County', 41.3083, -72.9279),
+        840090110124: ('CT-Bridgeport', 'Fairfield County', 41.1833, -73.1833),
+        840090011123: ('CT-Stamford', 'Fairfield County', 41.0534, -73.5387),
+        
+        # Long Island - Nassau & Suffolk
+        840340030010: ('Nassau-NW', 'Nassau County', 40.8333, -73.6667),
+        840340070010: ('Nassau-Central', 'Nassau County', 40.8500, -73.5000),
+        840340170008: ('Suffolk-E', 'Suffolk County', 40.9500, -72.8000),
+        840340171003: ('Suffolk-SE', 'Suffolk County', 40.8667, -72.7333),
+        840340210005: ('Suffolk-Central', 'Suffolk County', 40.9000, -72.9000),
+        840340210008: ('Suffolk-NE', 'Suffolk County', 41.0500, -72.7500),
+        840340390004: ('Nassau-SW', 'Nassau County', 40.6833, -73.5000),
+        840340392003: ('Nassau-S', 'Nassau County', 40.6500, -73.6667),
+        840340190001: ('Hempstead', 'Nassau County', 40.7550, -73.6219),
+        840340273001: ('Freeport', 'Nassau County', 40.6575, -73.5819),
+        840340230011: ('Rockville Centre', 'Nassau County', 40.6667, -73.6500),
+        840340410007: ('Valley Stream', 'Nassau County', 40.6650, -73.7100),
+        
+        # Rockland County, NY
+        840360810120: ('Rockland-W', 'Rockland County', 41.0880, -74.2435),
+        840360810124: ('Rockland-S', 'Rockland County', 41.1333, -74.0333),
+        
+        # Orange County, NY
+        840360870005: ('Orange County', 'Orange County', 41.3333, -74.2667),
+        
+        # Dutchess & Putnam Counties, NY
+        840361030009: ('Dutchess County', 'Dutchess County', 41.6333, -73.7000),
+        840361192004: ('Putnam County', 'Putnam County', 41.4667, -73.8667),
     }
     
     sites_list = []
@@ -237,7 +284,7 @@ max_date = weather_df['datetime'].max().date()
 with col_date:
     selected_date = st.date_input(
         "📅 Date",
-        value=max_date,
+        value=min_date,
         min_value=min_date,
         max_value=max_date
     )
@@ -246,7 +293,7 @@ with col_time:
     selected_hour = st.selectbox(
         "🕐 Hour (UTC)",
         options=range(0, 24),
-        index=23,
+        index=0,
         help="Select hour (0-23)"
     )
 
@@ -288,13 +335,18 @@ if not known_sites_available:
 nyc_areas = {'All Areas': known_sites_available}
 
 predefined_areas = {
-    'Manhattan/Brooklyn': ['New York-Brooklyn'],
-    'Queens/Nassau': ['Queens-Nassau'],
-    'Westchester': ['Westchester'],
-    'Bronx/Yonkers': ['Bronx-Yonkers'],
-    'Staten Island': ['Staten Island'],
-    'New Jersey': ['New Jersey-Bergen', 'New Jersey-Hudson'],
-    'Connecticut': ['Connecticut']
+    'Manhattan': ['Manhattan-Midtown', 'Manhattan-Upper West', 'Manhattan-Upper East'],
+    'Brooklyn': ['Brooklyn-Downtown'],
+    'Queens': ['Queens-Astoria', 'Queens-Jamaica'],
+    'Bronx': ['Bronx-SW', 'Bronx-Pelham'],
+    'Staten Island': ['Staten Island-Fresh Kills', 'Staten Island-Coney Island'],
+    'Westchester': ['Westchester-Yonkers', 'Westchester-Mamaroneck', 'Westchester-Croton'],
+    'Long Island (Nassau)': ['Nassau-NW', 'Nassau-Central', 'Nassau-SW', 'Nassau-S', 'Hempstead', 'Freeport', 'Rockville Centre', 'Valley Stream'],
+    'Long Island (Suffolk)': ['Suffolk-E', 'Suffolk-SE', 'Suffolk-Central', 'Suffolk-NE'],
+    'New Jersey': ['NJ-Hudson'],
+    'Connecticut': ['CT-New Haven', 'CT-Bridgeport', 'CT-Stamford'],
+    'Rockland County': ['Rockland-W', 'Rockland-S'],
+    'Orange/Dutchess': ['Orange County', 'Dutchess County', 'Putnam County']
 }
 
 for area_name, sites in predefined_areas.items():
@@ -327,7 +379,7 @@ st.sidebar.info(f"📍 Data for: **{pd.Timestamp(closest_time).strftime('%Y-%m-%
 # ====================================================================
 # CREATE TABS
 # ====================================================================
-tab_dashboard, tab_map, tab_weather, tab_about = st.tabs(["📊 Dashboard", "🗺️ Large Map", "🌦️ Weather Details", "ℹ️ About"])
+tab_dashboard, tab_weather, tab_about = st.tabs(["📊 Dashboard", "🌦️ Weather Details", "ℹ️ About"])
 
 # ====================================================================
 # TAB 1: DASHBOARD
@@ -560,17 +612,13 @@ with tab_dashboard:
                     <b>{risk}</b>
                 </div>
                 """, unsafe_allow_html=True)
-    
-    else:
-        st.warning(f"⚠️ No data available for {selected_datetime.strftime('%Y-%m-%d %H:%M UTC')}. Please select a different time.")
-
-# ====================================================================
-# TAB 2: LARGE MAP
-# ====================================================================
-with tab_map:
-    
-    if not df_current.empty and len(df_current) > 0:
-        st.subheader("🗺️ Geographic Heat Risk Map (Full Screen)")
+        
+        st.divider()
+        
+        # ====================================================================
+        # MAP ON DASHBOARD
+        # ====================================================================
+        st.subheader("🗺️ Geographic Heat Risk Map")
         
         # Create Folium map
         if not df_area.empty:
@@ -629,7 +677,7 @@ with tab_map:
             folium.CircleMarker(
                 location=[row['latitude'], row['longitude']],
                 radius=12,
-                popup=folium.Popup(popup_text, max_width=300),
+                popup=folium.Popup(popup_text, max_width="300px"),
                 tooltip=f"{site_name}: HSRI {hsri_val:.1f}",
                 color=get_marker_color(hsri_val),
                 fill=True,
@@ -637,25 +685,49 @@ with tab_map:
                 fillOpacity=0.7,
                 weight=2
             ).add_to(m)
+            
+            # Add text label with HSRI value inside circle
+            folium.Marker(
+                location=[row['latitude'], row['longitude']],
+                icon=folium.DivIcon(html=f"""
+                    <div style="
+                        font-size: 12px;
+                        font-weight: bold;
+                        color: white;
+                        text-align: center;
+                        text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+                        width: 30px;
+                        height: 30px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-left: -15px;
+                        margin-top: -15px;
+                    ">{hsri_val:.0f}</div>
+                """)
+            ).add_to(m)
         
         st_folium(m, width=1400, height=700)
         
         # Legend
         st.markdown("**Risk Level Legend**")
-        col1, col2, col3, col4, col5 = st.columns(5)
-        with col1:
+        map_col1, map_col2, map_col3, map_col4, map_col5 = st.columns(5)
+        with map_col1:
             st.markdown('<div style="padding: 10px; background-color: #ffe6e6; border-left: 4px solid #d62728;"><b>🔴 Critical</b><br/>HSRI ≥ 85</div>', unsafe_allow_html=True)
-        with col2:
+        with map_col2:
             st.markdown('<div style="padding: 10px; background-color: #fff0e6; border-left: 4px solid #ff7f0e;"><b>🟠 High</b><br/>HSRI ≥ 75</div>', unsafe_allow_html=True)
-        with col3:
+        with map_col3:
             st.markdown('<div style="padding: 10px; background-color: #fffef0; border-left: 4px solid #ffbb78;"><b>🟡 Moderate</b><br/>HSRI ≥ 65</div>', unsafe_allow_html=True)
-        with col4:
+        with map_col4:
             st.markdown('<div style="padding: 10px; background-color: #f0fff0; border-left: 4px solid #2ca02c;"><b>🟢 Low</b><br/>HSRI ≥ 50</div>', unsafe_allow_html=True)
-        with col5:
+        with map_col5:
             st.markdown('<div style="padding: 10px; background-color: #f0f8ff; border-left: 4px solid #1f77b4;"><b>🔵 Cool</b><br/>HSRI < 50</div>', unsafe_allow_html=True)
+    
+    else:
+        st.warning(f"⚠️ No data available for {selected_datetime.strftime('%Y-%m-%d %H:%M UTC')}. Please select a different time.")
 
 # ====================================================================
-# TAB 3: WEATHER DETAILS
+# TAB 2: WEATHER DETAILS
 # ====================================================================
 with tab_weather:
     
