@@ -36,11 +36,7 @@ st.markdown("**Heat Stress Risk Index** • Real-time conditions & clothing reco
 @st.cache_data
 def load_weather_data(filepath='data/weather.csv'):
     """Load and preprocess weather CSV, filtering for core meteorological data."""
-    # Memory optimization: specify dtypes and only load needed columns
-    usecols = ['aqs_id_full', 'datetime', 'temp', 'humidity', 'windspeed', 
-               'solarradiation', 'uvindex', 'cloudcover']
-    
-    df = pd.read_csv(filepath, usecols=usecols, low_memory=False)
+    df = pd.read_csv(filepath)
     df['datetime'] = pd.to_datetime(df['datetime'])
     
     # Filter for rows with core meteorological parameters only
