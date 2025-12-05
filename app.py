@@ -9,7 +9,7 @@ Deploy to Streamlit Cloud with: streamlit cloud deploy
 import streamlit as st
 import pandas as pd
 import numpy as np
-import folium
+#import folium
 from streamlit_folium import st_folium
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
