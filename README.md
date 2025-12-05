@@ -219,7 +219,7 @@ Full documentation in `docs/` folder:
 ---
 
 ## 👤 Team
-
+- **Members**: Fabien De Silva Jr. <fmd48@cornell.edu>| Jose Ruben Salinas Aguilar <js3873@cornell.edu> | Anggasta Anindityo <aa2938@cornell.edu>
 - **Institution**: Cornell University, SYSEN
 - **Course**: SYSEN 5300 - Systems Engineering and Six Sigma
 - **Year**: Fall 2025
