@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 import plotly.graph_objects as go
 from sklearn.linear_model import LinearRegression
 import warnings
-warnings.filterwarnings('ignore')
+#warnings.filterwarnings('ignore')
 
 # ============================================================================
 # PAGE CONFIG
