@@ -10,7 +10,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import folium
-from streamlit_folium import folium_static
+from streamlit_folium import st_folium
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
 from sklearn.linear_model import LinearRegression
@@ -700,7 +700,7 @@ with tab_dashboard:
                 """)
             ).add_to(m)
         
-        folium_static(m, width=1400, height=700)
+        st_folium(m, width=1400, height=700)
         
         # Legend with Clothing Recommendations
         st.markdown("**👕 Risk Level Legend with Protective Clothing Guide**")
