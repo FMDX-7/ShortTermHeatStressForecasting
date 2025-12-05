@@ -803,40 +803,191 @@ with tab_weather:
 # TAB 3: FORECAST MAP
 # ====================================================================
 with tab_forecast_map:
-    st.subheader("🔮 3-Day HSRI Forecast Map")
-    st.markdown("Predicted heat stress risk index across all monitoring locations for the next 3 days")
+    st.subheader("🔮 3-Day Historical HSRI Lookup & Forecast")
+    st.markdown("View actual historical HSRI values or predict future heat stress risk across all monitoring locations")
     
     # Day selector for forecast
     forecast_day = st.selectbox(
-        "Select forecast day:",
+        "Select day to view:",
         options=[1, 2, 3],
         format_func=lambda x: f"Day {x} ({(pd.Timestamp(closest_time) + timedelta(days=x)).strftime('%Y-%m-%d')})"
     )
     
-    # Generate forecast for all sites using full weather data
-    forecast_data_all = {}
-    for aqs_id in weather_df['aqs_id_full'].unique():
-        site_data = weather_df[weather_df['aqs_id_full'] == aqs_id].sort_values('datetime').tail(50).copy()
-        if len(site_data) > 10:  # Need at least 10 records to forecast
-            # Compute HSRI for historical data
-            site_data['hsri'] = site_data.apply(
-                lambda row: compute_hsri(
-                    row.get('temp', 70),
-                    row.get('humidity', 50),
-                    row.get('windspeed', 5),
-                    row.get('solarradiation', 500),
-                    row.get('uvindex', 5),
-                    row.get('cloudcover', 50)
-                ), axis=1
-            )
-            forecast = forecast_hsri(site_data, days_ahead=3)
-            if forecast:
-                forecast_data_all[aqs_id] = forecast
+    target_date = pd.Timestamp(closest_time) + timedelta(days=forecast_day)
     
-    if not forecast_data_all:
-        st.warning("⚠️ Insufficient data for generating forecasts. Make sure weather.csv has data with required columns.")
+    # Check if data exists for this date (convert to date for comparison)
+    weather_df_dates = weather_df.copy()
+    weather_df_dates['date'] = pd.to_datetime(weather_df_dates['datetime']).dt.date
+    target_date_only = target_date.date()
+    data_for_date = weather_df_dates[weather_df_dates['date'] == target_date_only]
+    
+    if not data_for_date.empty:
+        st.info(f"✅ Historical data available for {target_date.strftime('%Y-%m-%d')} - Showing actual HSRI values")
+        # Use actual historical data
+        data_to_map = data_for_date.copy()
+        data_to_map['hsri'] = data_to_map.apply(
+            lambda row: compute_hsri(
+                row.get('temp', 70),
+                row.get('humidity', 50),
+                row.get('windspeed', 5),
+                row.get('solarradiation', 500),
+                row.get('uvindex', 5),
+                row.get('cloudcover', 50)
+            ), axis=1
+        )
+        is_forecast = False
+        forecast_data_all = None
     else:
-        # Create forecast map with all sites that have forecasts
+        st.info(f"📊 No historical data for {target_date.strftime('%Y-%m-%d')} - Showing forecast")
+        # Generate forecast for all sites
+        forecast_data_all = {}
+        for aqs_id in weather_df['aqs_id_full'].unique():
+            site_data = weather_df[weather_df['aqs_id_full'] == aqs_id].sort_values('datetime').tail(50).copy()
+            if len(site_data) > 10:  # Need at least 10 records to forecast
+                # Compute HSRI for historical data
+                site_data['hsri'] = site_data.apply(
+                    lambda row: compute_hsri(
+                        row.get('temp', 70),
+                        row.get('humidity', 50),
+                        row.get('windspeed', 5),
+                        row.get('solarradiation', 500),
+                        row.get('uvindex', 5),
+                        row.get('cloudcover', 50)
+                    ), axis=1
+                )
+                forecast = forecast_hsri(site_data, days_ahead=3)
+                if forecast:
+                    forecast_data_all[aqs_id] = forecast
+        is_forecast = True
+        data_to_map = None
+    
+    if is_forecast and (forecast_data_all is None or not forecast_data_all):
+        st.warning("⚠️ Insufficient data for generating forecasts. Make sure weather.csv has data with required columns.")
+    elif not is_forecast and data_to_map is not None and not data_to_map.empty:
+        # Create map with historical HSRI data
+        hist_sites = sites_df[sites_df['aqs_id_full'].isin(data_to_map['aqs_id_full'].unique())]
+        
+        if not hist_sites.empty:
+            center_lat = hist_sites['latitude'].mean()
+            center_lon = hist_sites['longitude'].mean()
+        else:
+            center_lat = 40.7128
+            center_lon = -74.0060
+        
+        if pd.isna(center_lat) or pd.isna(center_lon):
+            center_lat = 40.7128
+            center_lon = -74.0060
+        
+        m_forecast = folium.Map(
+            location=[center_lat, center_lon],
+            zoom_start=11,
+            tiles='OpenStreetMap'
+        )
+        
+        def get_marker_color(hsri_val):
+            if hsri_val >= 85:
+                return '#d62728'  # Critical - dark red
+            elif hsri_val >= 75:
+                return '#ff7f0e'  # High - orange
+            elif hsri_val >= 65:
+                return '#ffbb78'  # Moderate - light orange
+            elif hsri_val >= 50:
+                return '#2ca02c'  # Low - green
+            elif hsri_val >= 30:
+                return '#1f77b4'  # Cool - blue
+            else:
+                return '#6a0dad'  # Freezing - dark purple
+        
+        # Add historical markers
+        for aqs_id in data_to_map['aqs_id_full'].unique():
+            site_info = hist_sites[hist_sites['aqs_id_full'] == aqs_id]
+            if not site_info.empty:
+                site_row = site_info.iloc[0]
+                site_data = data_to_map[data_to_map['aqs_id_full'] == aqs_id]
+                
+                # Get the HSRI value (should be one per site per day, but take mean if multiple)
+                hsri_val = site_data['hsri'].mean()
+                risk_emoji, risk_text = get_risk_category(hsri_val)
+                
+                popup_text = f"""
+                <div style="font-family: Arial; width: 300px;">
+                    <b style="font-size: 14px;">{site_row['site_name']}</b><br/>
+                    <hr style="margin: 5px 0;">
+                    <b>County:</b> {site_row['county']}<br/>
+                    <b>📅 Date:</b> {target_date.strftime('%Y-%m-%d')}<br/>
+                    <hr style="margin: 5px 0;">
+                    <b style="font-size: 13px;">Actual HSRI: {hsri_val:.1f}</b><br/>
+                    <b>{risk_emoji} {risk_text}</b>
+                </div>
+                """
+                
+                folium.CircleMarker(
+                    location=[site_row['latitude'], site_row['longitude']],
+                    radius=16,
+                    popup=folium.Popup(popup_text, max_width="300px"),
+                    tooltip=f"{site_row['site_name']}: HSRI {hsri_val:.1f}",
+                    color=get_marker_color(hsri_val),
+                    fill=True,
+                    fillColor=get_marker_color(hsri_val),
+                    fillOpacity=0.7,
+                    weight=2
+                ).add_to(m_forecast)
+                
+                # Add text label
+                text_color = '#333333' if 50 <= hsri_val < 75 else 'white'
+                text_shadow = '1px 1px 2px rgba(255,255,255,0.8)' if 50 <= hsri_val < 75 else '1px 1px 2px rgba(0,0,0,0.8)'
+                
+                folium.Marker(
+                    location=[site_row['latitude'], site_row['longitude']],
+                    icon=folium.DivIcon(html=f"""
+                    <div style="
+                        font-size: 13px;
+                        font-weight: bold;
+                        color: {text_color};
+                        text-align: center;
+                        text-shadow: {text_shadow};
+                        width: 32px;
+                        height: 32px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-left: -16px;
+                        margin-top: -16px;
+                    ">{hsri_val:.0f}</div>
+                """)
+                ).add_to(m_forecast)
+        
+        st_folium(m_forecast, width=1400, height=700)
+        
+        # Summary statistics
+        st.divider()
+        st.subheader("📊 Historical HSRI Statistics")
+        
+        col1, col2, col3, col4, col5 = st.columns(5)
+        all_hsri_values = data_to_map['hsri'].dropna()
+        
+        with col1:
+            avg_hsri = all_hsri_values.mean()
+            st.metric("📊 Avg HSRI", f"{avg_hsri:.1f}°F")
+        
+        with col2:
+            max_hsri = all_hsri_values.max()
+            risk_emoji, risk_text = get_risk_category(max_hsri)
+            st.metric("🔥 Peak HSRI", f"{max_hsri:.1f}°F", delta=risk_text)
+        
+        with col3:
+            min_hsri = all_hsri_values.min()
+            st.metric("❄️ Min HSRI", f"{min_hsri:.1f}°F")
+        
+        with col4:
+            high_risk_count = sum(1 for val in all_hsri_values if val >= hsri_threshold)
+            st.metric("⚠️ High-Risk Sites", high_risk_count)
+        
+        with col5:
+            st.metric("📅 Date", target_date.strftime('%b %d, %Y'))
+    
+    elif is_forecast and forecast_data_all:
+        # Create forecast map with forecasted HSRI
         sites_with_forecast = sites_df[sites_df['aqs_id_full'].isin(forecast_data_all.keys())]
         
         if not sites_with_forecast.empty:
