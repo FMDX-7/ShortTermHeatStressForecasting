@@ -34,7 +34,7 @@ st.markdown("**Heat Stress Risk Index** • Real-time conditions & clothing reco
 # LOAD DATA
 # ============================================================================
 @st.cache_data
-def load_weather_data(filepath='weather.csv'):
+def load_weather_data(filepath='data/weather.csv'):
     """Load and preprocess weather CSV, filtering for core meteorological data."""
     df = pd.read_csv(filepath)
     df['datetime'] = pd.to_datetime(df['datetime'])
@@ -49,7 +49,7 @@ def load_weather_data(filepath='weather.csv'):
     return df
 
 @st.cache_data
-def load_metro_data(filepath='metro.csv'):
+def load_metro_data(filepath='data/metro.csv'):
     """Load metro area county data."""
     try:
         metro_df = pd.read_csv(filepath)
@@ -262,7 +262,7 @@ def get_risk_category(hsri):
 try:
     weather_df = load_weather_data()
 except FileNotFoundError:
-    st.error("❌ `weather.csv` not found. Place it in the same directory as this app.")
+    st.error("❌ `weather.csv` not found in data/ folder.")
     st.stop()
 
 sites_df = load_site_data(weather_df)
