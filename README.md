@@ -17,6 +17,12 @@ This Heat Stress Risk Index (HSRI) Weather Dashboard is a real-time monitoring a
 - **Enable data-driven decision-making** for city planners, public health officials, and emergency managers
 
 ---
+## 👤 Team
+- **Members**: Fabien De Silva Jr. <fmd48@cornell.edu>| Jose Ruben Salinas Aguilar <js3873@cornell.edu> | Anggasta Anindityo <aa2938@cornell.edu>
+- **Institution**: Cornell University, SYSEN
+- **Course**: SYSEN 5300 - Systems Engineering and Six Sigma
+- **Year**: Fall 2025
+---
 
 ## 🚀 Quick Start
 
@@ -215,14 +221,6 @@ Full documentation in `docs/` folder:
 - Weather data: EPA AQS (public domain)
 - Geographic data: U.S. Census (public domain)
 - Code: MIT License
-
----
-
-## 👤 Team
-- **Members**: Fabien De Silva Jr. <fmd48@cornell.edu>| Jose Ruben Salinas Aguilar <js3873@cornell.edu> | Anggasta Anindityo <aa2938@cornell.edu>
-- **Institution**: Cornell University, SYSEN
-- **Course**: SYSEN 5300 - Systems Engineering and Six Sigma
-- **Year**: Fall 2025
 
 ---
 
