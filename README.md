@@ -216,11 +216,20 @@ Full documentation in `docs/` folder:
 
 ---
 
-## 📄 Licensing
+## 📄 License
 
-- Weather data: EPA AQS (public domain)
-- Geographic data: U.S. Census (public domain)
-- Code: MIT License
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+### Attribution Required
+If you use this code or dashboard, please credit:
+- **Fabien M. De Silva Jr.** (fmd48@cornell.edu)
+- **Jose Ruben Salinas Aguilar** (js3873@cornell.edu)
+- **Anggasta Anindityo** (aa2938@cornell.edu)
+- **Cornell University, SYSEN 5300**
+
+### Data Sources
+- **Weather data**: EPA AQS (public domain)
+- **Geographic data**: U.S. Census Bureau (public domain)
 
 ---
 
