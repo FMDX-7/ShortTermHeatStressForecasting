@@ -1159,7 +1159,8 @@ with tab_about:
     - 🟠 **High** (≥75): Significant risk - increase cooling center capacity
     - 🟡 **Moderate** (≥65): Moderate risk - monitor vulnerable populations
     - 🟢 **Low** (≥50): Mild conditions - routine operations
-    - 🔵 **Cool** (<50): Cool conditions - normal operations
+    - 🔵 **Cool** (30-49): Cool conditions - light layers recommended
+    - ⚪ **Freezing** (<30): Freezing conditions - winter coat required
     
     ---
     
