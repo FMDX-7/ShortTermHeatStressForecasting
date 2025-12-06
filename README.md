@@ -27,7 +27,9 @@ This Heat Stress Risk Index (HSRI) Weather Dashboard is a real-time monitoring a
 ## 🚀 Quick Start
 
 ### Access the Dashboard
-The dashboard is deployed and accessible online. Navigate to the main interface to:
+The dashboard is deployed and live at: **https://hsri-forecast.streamlit.app/**
+
+Navigate to the main interface to:
 1. Select a date and time from the sidebar
 2. Choose an NYC borough/area or view "All Areas"
 3. Adjust the HSRI Risk Threshold to filter high-risk locations

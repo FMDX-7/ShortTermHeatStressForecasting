@@ -1297,6 +1297,19 @@ with tab_about:
     ### Data Licensing
     - Weather data sourced from EPA AQS (public domain)
     - County geographic data from U.S. Census (public domain)
+    - **Code**: MIT License
+    
+    ### License & Attribution
+    This project is licensed under the **MIT License**. If you use this code or dashboard, please credit:
+    - **Fabien M. De Silva Jr.** (fmd48@cornell.edu)
+    - **Jose Ruben Salinas Aguilar** (js3873@cornell.edu)
+    - **Anggasta Anindityo** (aa2938@cornell.edu)
+    - **Cornell University, SYSEN 5300**
+    
+    See [LICENSE](https://github.com/FMDX-7/ShortTermHeatStressForecasting/blob/main/LICENSE) for full terms.
+    
+    ### Access the Live Dashboard
+    **Deployed and live at:** [https://hsri-forecast.streamlit.app/](https://hsri-forecast.streamlit.app/)
     
     ---
     
