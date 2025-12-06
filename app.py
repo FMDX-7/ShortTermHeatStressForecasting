@@ -1231,18 +1231,39 @@ with tab_financial:
     regardless of whether each neighborhood actually needs them. This blanket approach wastes resources.
     
     Our predictive model uses **neighborhood-level HSRI forecasts** to open cooling centers **only where they're needed**:
+    """)
     
-    - **Current Model:** 100% of facilities open on all ~30 heat emergency days/year
-      - Daily cost: $6.67M × 30 days = $200M/year
-      - **Problem:** Many centers sit empty while all must be staffed
+    col1, col2 = st.columns(2)
     
-    - **Our Predictive Model:** 60% of facilities needed on average (targeted based on HSRI forecast)
-      - Daily cost: $6.67M × 60% × 30 days = $120M/year  
-      - **Benefit:** Facilities open only where risk is highest; better service for those areas
+    with col1:
+        st.markdown("""
+        #### Current Model (All or Nothing)
+        - **Open:** 100% of facilities on all ~30 heat emergency days/year
+        - **Daily cost when active:** $6.67M
+        - **Annual cost:** $6.67M × 30 days = **$200M/year**
+        - **Problem:** Many centers sit empty while all must be staffed
+        """)
     
-    - **Annual Savings:** $200M - $120M = **$80M from operational efficiency alone**
-    - **Additional Savings:** $10.2M from prevented ED visits + $5-8M staff overtime reduction + $2-3M energy savings
-    - **Total: $97-105M/year with just $3.21K in system costs**
+    with col2:
+        st.markdown("""
+        #### Our Predictive Model (Targeted)
+        - **Open:** ~60% of facilities (based on HSRI forecast)
+        - **Daily cost:** $6.67M × 60% = $4.00M
+        - **Annual cost:** $4.00M × 30 days = **$120M/year**
+        - **Benefit:** Centers open only where risk is highest; better service in those areas
+        """)
+    
+    st.markdown("""
+    ### Savings Breakdown
+    | Category | Amount |
+    |----------|--------|
+    | Cooling Center Efficiency | **$80M/year** |
+    | Prevented ED Visits | **$10.2M/year** |
+    | Staff Overtime Reduction | **$5-8M/year** |
+    | Energy Cost Savings | **$2-3M/year** |
+    | **Total Annual Benefit** | **$97-105M/year** |
+    | **System Operating Cost** | **$3.21K/year** |
+    | **Net Annual Savings** | **$97-105M/year** |
     """)
     
     # Visualization: Cost comparison over time
