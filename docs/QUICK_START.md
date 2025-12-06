@@ -1,6 +1,14 @@
 # ⚡ QUICK REFERENCE - NYC HSRI Dashboard
 
-## 🚀 Get Started in 30 Seconds
+## 🚀 Access the Live Dashboard
+
+**Live deployment:** https://hsri-forecast.streamlit.app/
+
+No installation required — click the link and start using the dashboard!
+
+---
+
+## 💻 Run Locally (Alternative)
 
 ```bash
 # Install

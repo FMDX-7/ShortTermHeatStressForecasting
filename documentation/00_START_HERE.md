@@ -1,8 +1,16 @@
-# 🎊 NYC HSRI DASHBOARD - PROJECT COMPLETE
+# 🎊 NYC HSRI DASHBOARD - PROJECT COMPLETE & DEPLOYED
 
 ## ✅ DELIVERY SUMMARY
 
-Your **Short-Term Heat Stress Forecasting Dashboard** is **100% complete and production-ready**.
+Your **Short-Term Heat Stress Forecasting Dashboard** is **100% complete, production-ready, and live at https://hsri-forecast.streamlit.app/**
+
+---
+
+## 🌐 ACCESS THE LIVE DASHBOARD
+
+**No installation needed!** The dashboard is deployed and accessible online:
+
+👉 **https://hsri-forecast.streamlit.app/**
 
 ---
 
@@ -319,32 +327,47 @@ streamlit run app.py
 ```
 ╔═══════════════════════════════════════════╗
 ║                                           ║
-║       ✅ PROJECT COMPLETE & READY        ║
+║       ✅ PROJECT COMPLETE & DEPLOYED      ║
 ║                                           ║
 ║  NYC METRO HSRI DASHBOARD v1.0            ║
-║  Status: PRODUCTION READY                 ║
+║  Status: LIVE ON STREAMLIT CLOUD          ║
 ║  Quality: Enterprise Grade                ║
 ║  Documentation: Comprehensive (100 pages) ║
+║  License: MIT (with attribution)          ║
 ║                                           ║
 ║  Application: COMPLETE ✅                 ║
 ║  Metro Integration: COMPLETE ✅           ║
 ║  Forecasting: COMPLETE ✅                 ║
 ║  Documentation: COMPLETE ✅               ║
 ║  Testing: COMPLETE ✅                     ║
+║  Deployment: LIVE ✅                      ║
 ║                                           ║
-║  READY FOR DEPLOYMENT ✅                  ║
+║  🌐 https://hsri-forecast.streamlit.app/ ║
 ║                                           ║
 ╚═══════════════════════════════════════════╝
 ```
 
 ---
 
+## 📄 License & Attribution
+
+This project is licensed under the **MIT License**. For full terms, see [LICENSE](../LICENSE).
+
+**When using this code/dashboard, please credit:**
+- **Fabien M. De Silva Jr.** (fmd48@cornell.edu)
+- **Jose Ruben Salinas Aguilar** (js3873@cornell.edu)
+- **Anggasta Anindityo** (aa2938@cornell.edu)
+- **Cornell University, SYSEN 5300**
+
+---
+
 ## 🙏 THANK YOU
 
-Your **NYC HSRI Weather Dashboard** is complete and ready to help mitigate heat-related health risks across NYC Metro.
+Your **NYC HSRI Weather Dashboard** is complete, deployed, and ready to help mitigate heat-related health risks across NYC Metro.
 
+**Access online:** https://hsri-forecast.streamlit.app/  
 **Questions?** Check the documentation files (9 comprehensive guides included)  
-**Ready to run?** Execute: `streamlit run app.py`  
+**Run locally?** Execute: `streamlit run app.py`  
 **Need more info?** Start with **DOCUMENTATION_INDEX.md**  
 
 ---

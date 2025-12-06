@@ -21,7 +21,7 @@ docs/
 The root-level **README.md** now contains:
 
 ✅ **Project Overview** - Goals and purpose
-✅ **Quick Start** - How to run locally and online
+✅ **Quick Start** - How to run locally and access live dashboard at https://hsri-forecast.streamlit.app/
 ✅ **HSRI Formula** - Complete explanation with weights
 ✅ **Risk Categories** - All 6 tiers with descriptions
 ✅ **Dashboard Features** - Overview of all 3 tabs
@@ -31,6 +31,7 @@ The root-level **README.md** now contains:
 ✅ **Clothing Recommendations** - By risk level
 ✅ **User Guides** - For different stakeholder types
 ✅ **Technical Stack** - All dependencies
+✅ **License** - MIT License with attribution requirements
 ✅ **Resources & Licensing** - External links and terms
 
 ---
@@ -39,6 +40,9 @@ The root-level **README.md** now contains:
 
 The About section in `app.py` has been updated to reflect:
 
+✅ **Deployment link** - Live dashboard at https://hsri-forecast.streamlit.app/
+✅ **MIT License** - Full license text and GitHub link
+✅ **Attribution requirements** - All three team member names
 ✅ **Current data handling** - Shows "N/A" for missing solar/UV/cloud
 ✅ **Correct HSRI bounds** - [-100, 100]°F for natural winter/summer values
 ✅ **Proper forecasting description** - How missing data is handled
