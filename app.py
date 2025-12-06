@@ -806,6 +806,9 @@ with tab_forecast_map:
     st.subheader("🔮 3-Day Historical HSRI Lookup & Forecast")
     st.markdown("View actual historical HSRI values or predict future heat stress risk across all monitoring locations")
     
+    # Apply area filter from sidebar
+    sites_to_show = nyc_areas[selected_area]
+    
     # Day selector for forecast
     forecast_day = st.selectbox(
         "Select day to view:",
@@ -835,13 +838,21 @@ with tab_forecast_map:
                 row.get('cloudcover', 50)
             ), axis=1
         )
+        
+        # Filter by selected area
+        data_to_map = data_to_map.merge(sites_df[['aqs_id_full', 'site_name']], on='aqs_id_full', how='left')
+        data_to_map = data_to_map[data_to_map['site_name'].isin(sites_to_show)]
+        
         is_forecast = False
         forecast_data_all = None
     else:
         st.info(f"📊 No historical data for {target_date.strftime('%Y-%m-%d')} - Showing forecast")
-        # Generate forecast for all sites
+        # Generate forecast for sites in selected area
         forecast_data_all = {}
-        for aqs_id in weather_df['aqs_id_full'].unique():
+        # Get AQS IDs for selected area
+        selected_aqs_ids = sites_df[sites_df['site_name'].isin(sites_to_show)]['aqs_id_full'].unique()
+        
+        for aqs_id in selected_aqs_ids:
             site_data = weather_df[weather_df['aqs_id_full'] == aqs_id].sort_values('datetime').tail(50).copy()
             if len(site_data) > 10:  # Need at least 10 records to forecast
                 # Compute HSRI for historical data
