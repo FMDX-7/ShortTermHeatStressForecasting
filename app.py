@@ -1145,23 +1145,25 @@ with tab_financial:
     
     with col1:
         st.metric(
-            "🏛️ Current System (Annual)",
+            "🏛️ Current NYC System (Annual)",
             f"${baseline_annual_cost/1e6:.1f}M",
-            help="NYC reactive cooling center model"
+            help="Reactive: Opens all 600+ cooling centers simultaneously"
         )
     
     with col2:
         st.metric(
-            "🤖 Proposed System (Annual)",
+            "🤖 Our System Operating Cost (Annual)",
             f"${proposed_annual_operating/1e3:.2f}K",
-            help="Predictive ML system operational costs (weather API, cloud compute, storage, alerts)"
+            help="Just the ML system + cloud infrastructure + alerts (weather API, compute, storage)"
         )
     
     with col3:
+        total_annual_benefit = cooling_center_savings + healthcare_savings + 6.5e6
         st.metric(
-            "💾 First-Year Implementation",
-            f"${implementation_cost/1e3:.0f}K",
-            help="Development, integration, testing, training"
+            "💰 Total Annual Benefit",
+            f"${total_annual_benefit/1e6:.1f}M",
+            delta=f"-${(baseline_annual_cost - total_annual_benefit)/1e6:.1f}M cost reduction",
+            help="Cooling center optimization + healthcare savings + staff/energy savings"
         )
     
     st.divider()
