@@ -1172,16 +1172,17 @@ with tab_financial:
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        annual_savings = baseline_annual_cost - proposed_annual_operating
-        roi_pct = ((annual_savings - implementation_cost) / implementation_cost) * 100
+        # Total annual savings (cooling center + healthcare + other benefits)
+        total_annual_savings = cooling_center_savings + healthcare_savings + 6.5e6  # cooling center + healthcare + staff/energy avg
+        roi_pct = ((total_annual_savings - implementation_cost) / implementation_cost) * 100
         st.metric(
-            "Annual Savings (Operational)",
-            f"${annual_savings/1e6:.2f}M",
+            "Annual Savings (Total)",
+            f"${total_annual_savings/1e6:.1f}M",
             delta=f"{roi_pct/100:.0f}x ROI"
         )
     
     with col2:
-        payback_days = (implementation_cost / annual_savings) * 365
+        payback_days = (implementation_cost / total_annual_savings) * 365
         st.metric(
             "Payback Period",
             f"{payback_days:.1f} days",
@@ -1189,7 +1190,7 @@ with tab_financial:
         )
     
     with col3:
-        five_year_cumulative = (annual_savings * 5) - (implementation_cost + proposed_annual_operating * 5)
+        five_year_cumulative = (total_annual_savings * 5) - (implementation_cost + proposed_annual_operating * 5)
         st.metric(
             "5-Year Cumulative Savings",
             f"${five_year_cumulative/1e6:.1f}M",
@@ -1573,7 +1574,7 @@ with tab_financial:
             "Alert Lead Time"
         ],
         "Value": [
-            f"{((annual_savings - implementation_cost) / implementation_cost):.0%}",
+            f"{((total_annual_savings - implementation_cost) / implementation_cost):.0%}",
             f"{payback_days:.1f} days",
             f"${cooling_center_savings/1e6:.1f}M",
             f"${healthcare_savings/1e6:.1f}M",
