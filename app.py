@@ -261,7 +261,7 @@ def get_risk_category(hsri):
     elif hsri >= 30:
         return "🔵 COOL", "Cool"
     else:
-        return "⚪ FREEZING", "Freezing"
+        return "🟣 FREEZING", "Freezing"
 
 # ============================================================================
 # MAIN APP
@@ -1160,9 +1160,7 @@ with tab_about:
     - 🟡 **Moderate** (≥65): Moderate risk - monitor vulnerable populations
     - 🟢 **Low** (≥50): Mild conditions - routine operations
     - 🔵 **Cool** (30-49): Cool conditions - light layers recommended
-    - ⚪ **Freezing** (<30): Freezing conditions - winter coat required
-    
-    ---
+                - 🟣 **Freezing** (<30): Freezing conditions - winter coat required    ---
     
     ## Data & Model
     
