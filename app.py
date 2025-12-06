@@ -1240,7 +1240,7 @@ with tab_financial:
         #### Current Model (All or Nothing)
         - **Open:** 100% of facilities on all ~30 heat emergency days/year
         - **Daily cost when active:** $6.67M
-        - **Annual cost:** $6.67M × 30 days = **$200M/year**
+        - **Annual cost:** $6.67M × 30 days = $200M/year
         - **Problem:** Many centers sit empty while all must be staffed
         """)
     
@@ -1249,7 +1249,7 @@ with tab_financial:
         #### Our Predictive Model (Targeted)
         - **Open:** ~60% of facilities (based on HSRI forecast)
         - **Daily cost:** $6.67M × 60% = $4.00M
-        - **Annual cost:** $4.00M × 30 days = **$120M/year**
+        - **Annual cost:** $4.00M × 30 days = $120M/year
         - **Benefit:** Centers open only where risk is highest; better service in those areas
         """)
     
