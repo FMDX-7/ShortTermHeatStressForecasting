@@ -188,7 +188,7 @@ def compute_hsri(temp_f, humidity, wind_speed, solar_radiation, uv_index, cloud_
     alpha, beta, gamma, delta = 0.3, 8.0, 4.0, 0.05
     hsri = hi_base + alpha * uv_val + beta * sr_eff - gamma * wind_speed - delta * cc_val
     
-    return np.clip(hsri, -100, 100)  # Reasonable bounds for human comfort index
+    return np.clip(hsri, -100, 100)  # Reasonable bounds for HSRI index scale
 
 def compute_hi_nws(temp_f, humidity):
     """NWS Heat Index (Rothfusz regression)."""
@@ -464,7 +464,7 @@ with tab_dashboard:
         with col1:
             avg_hsri = df_area['hsri'].mean() if not df_area.empty else None
             if pd.notna(avg_hsri):
-                st.metric("📊 Avg HSRI", f"{avg_hsri:.1f}°F")
+                st.metric("📊 Avg HSRI", f"{avg_hsri:.1f}")
             else:
                 st.metric("📊 Avg HSRI", "N/A")
         
@@ -472,7 +472,7 @@ with tab_dashboard:
             max_hsri = df_area['hsri'].max() if not df_area.empty else None
             if pd.notna(max_hsri):
                 risk_emoji, risk_text = get_risk_category(max_hsri)
-                st.metric("🔥 Peak HSRI", f"{max_hsri:.1f}°F", delta=risk_text)
+                st.metric("🔥 Peak HSRI", f"{max_hsri:.1f}", delta=risk_text)
             else:
                 st.metric("🔥 Peak HSRI", "N/A")
         
@@ -770,7 +770,7 @@ with tab_weather:
                 
                 with col4:
                     st.markdown("**Heat Stress Index**")
-                    st.metric("📊 HSRI Output", f"{hsri_val:.1f}°F")
+                    st.metric("📊 HSRI Output", f"{hsri_val:.1f}")
                     st.metric("📍 County", row.get('county', 'N/A'))
                     st.caption(f"Updated: {closest_time.strftime('%H:%M UTC')}")
         
@@ -979,16 +979,16 @@ with tab_forecast_map:
         
         with col1:
             avg_hsri = all_hsri_values.mean()
-            st.metric("📊 Avg HSRI", f"{avg_hsri:.1f}°F")
+            st.metric("📊 Avg HSRI", f"{avg_hsri:.1f}")
         
         with col2:
             max_hsri = all_hsri_values.max()
             risk_emoji, risk_text = get_risk_category(max_hsri)
-            st.metric("🔥 Peak HSRI", f"{max_hsri:.1f}°F", delta=risk_text)
+            st.metric("🔥 Peak HSRI", f"{max_hsri:.1f}", delta=risk_text)
         
         with col3:
             min_hsri = all_hsri_values.min()
-            st.metric("❄️ Min HSRI", f"{min_hsri:.1f}°F")
+            st.metric("❄️ Min HSRI", f"{min_hsri:.1f}")
         
         with col4:
             high_risk_count = sum(1 for val in all_hsri_values if val >= hsri_threshold)
@@ -1103,16 +1103,16 @@ with tab_forecast_map:
         
         with col1:
             avg_hsri = np.mean(all_forecast_values)
-            st.metric("📊 Avg Forecast HSRI", f"{avg_hsri:.1f}°F")
+            st.metric("📊 Avg Forecast HSRI", f"{avg_hsri:.1f}")
         
         with col2:
             max_hsri = np.max(all_forecast_values)
             risk_emoji, risk_text = get_risk_category(max_hsri)
-            st.metric("🔥 Peak Forecast HSRI", f"{max_hsri:.1f}°F", delta=risk_text)
+            st.metric("🔥 Peak Forecast HSRI", f"{max_hsri:.1f}", delta=risk_text)
         
         with col3:
             min_hsri = np.min(all_forecast_values)
-            st.metric("❄️ Min Forecast HSRI", f"{min_hsri:.1f}°F")
+            st.metric("❄️ Min Forecast HSRI", f"{min_hsri:.1f}")
         
         with col4:
             high_risk_count = sum(1 for val in all_forecast_values if val >= hsri_threshold)
@@ -1498,7 +1498,7 @@ with tab_financial:
     with col2:
         st.metric(
             "Prediction RMSE",
-            f"±{model_rmse:.1f}°F",
+            f"±{model_rmse:.1f} points",
             help="Root Mean Squared Error vs. observed"
         )
     
@@ -1679,7 +1679,7 @@ with tab_about:
     
     ### Forecasting Model
     - **Algorithm**: Linear Regression
-    - **Model Accuracy**: R² = 0.965, RMSE = 3.0°F, MAE = 2.19°F
+    - **Model Accuracy**: R² = 0.965, RMSE = 3.0 HSRI points, MAE = 2.19 HSRI points
     - **Horizon**: 1-3 day advance forecasts
     - **Rationale**: Prioritizes interpretability and operational feasibility over black-box approaches
     
@@ -1773,7 +1773,7 @@ with tab_about:
     - Linear regression on 6-dimensional weather feature space
     - Trained on historical HSRI data
     - Future predictions based on trend extrapolation
-    - Bounds: [-100, 100]°F to allow natural winter and summer values
+    - Bounds: [-100, 100] HSRI points to cover the full comfort-risk range
     
     ---
     
@@ -1834,7 +1834,7 @@ with col_footer1:
     st.caption(f"🔄 Last Update: {closest_time.strftime('%Y-%m-%d %H:%M UTC')}")
 
 with col_footer2:
-    st.caption("**Model Accuracy:** R² = 0.965, RMSE = 3.0°F")
+    st.caption("**Model Accuracy:** R² = 0.965, RMSE = 3.0 HSRI points")
     st.caption("**Project:** SYSEN 5300 • Cornell University")
 
 with col_footer3:
